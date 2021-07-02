@@ -13,6 +13,7 @@ type Subscriber struct {
 	topics    map[string]bool
 	messages  chan *Message
 	lock      sync.RWMutex
+	ack       chan *Ack
 }
 
 // NewSubscriber is a constructor for the Subscriber struct
@@ -29,6 +30,7 @@ func NewSubscriber() (*Subscriber, error) {
 		lock:      sync.RWMutex{},
 		topics:    map[string]bool{},
 		messages:  make(chan *Message),
+		ack:       make(chan *Ack),
 	}, nil
 }
 
@@ -51,6 +53,20 @@ func (s *Subscriber) Signal(m *Message) *Subscriber {
 	s.lock.RLock()
 	if !s.destroyed {
 		s.messages <- m
+	}
+	s.lock.RUnlock()
+	return s
+}
+
+// Ack sends ack signal for the received message
+func (s *Subscriber) Ack(m *Message) *Subscriber {
+	s.lock.RLock()
+	if !s.destroyed {
+		a := &Ack{
+			payload: m.GetPayload(),
+			id:      s.id,
+		}
+		s.ack <- a
 	}
 	s.lock.RUnlock()
 	return s
@@ -80,6 +96,11 @@ func (s *Subscriber) GetTopics() []string {
 // GetMessages returns a channel for Message to listen on
 func (s *Subscriber) GetMessages() <-chan *Message {
 	return s.messages
+}
+
+// GetAck returns a channel for Ack to listen on
+func (s *Subscriber) GetAck() <-chan *Ack {
+	return s.ack
 }
 
 // destroy removes the current subscriber

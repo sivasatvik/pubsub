@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"sync"
+	"time"
 )
 
 // Subscribers map to their id for easy retrieval
@@ -94,8 +95,20 @@ func (b *Broker) Publish(payload interface{}, topics ...string) {
 				topic:   topic,
 				payload: payload,
 			}
+			ch := s.GetAck()
 			go (func(s *Subscriber) {
+			RETRY:
 				s.Signal(m)
+				select {
+				case msg := <-ch:
+					// ACK has been received for the message sent, so move ahead
+					//fmt.Printf("Received ack from the subscriber: %s\n", msg.GetID())
+					_ = msg
+				case <-time.After(5 * time.Second):
+					//fmt.Printf("Didn't receive ack from the subscriber: %s, retrying\n", s.GetID())
+					// ACK hasn't been received in the time limit. Retry sending the message
+					goto RETRY
+				}
 			})(s)
 		}
 		b.topicsLock.RUnlock()

@@ -30,7 +30,7 @@ func main() {
 	go send("ABCDE", broker)
 	go send("STUVW", broker)
 	go send("LMNOP", broker)
-	go receive(subscriber1.GetID(), ch1)
+	go receive(subscriber1, ch1)
 
 	fmt.Scanln()
 	fmt.Println("done")
@@ -50,15 +50,17 @@ func send(topic string, broker *pubsub.Broker) {
 		m := createMessage()
 		fmt.Printf("On topic: %s, sending the message: %v\n", topic, m)
 		broker.Publish(m, topic)
-		time.Sleep(time.Second)
+		time.Sleep(2 * time.Second)
+		break
 	}
 }
 
-func receive(id string, ch <-chan *pubsub.Message) {
-	fmt.Printf("----Subscriber %s, receiving----\n", id)
+func receive(sub *pubsub.Subscriber, ch <-chan *pubsub.Message) {
+	fmt.Printf("----Subscriber %s, receiving----\n", sub.GetID())
 	for {
 		if msg, ok := <-ch; ok {
-			fmt.Printf("Subscriber %v, on topic: %s, receiving the message: %s\n", id, msg.GetTopic(), msg.GetPayload())
+			fmt.Printf("Subscriber %v, on topic: %s, receiving the message: %s\n", sub.GetID(), msg.GetTopic(), msg.GetPayload())
+			sub.Ack(msg)
 		}
 	}
 }
