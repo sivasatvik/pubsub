@@ -31,7 +31,7 @@ CreateTopic(topic) // Adds the topic to the subscriber who calls it
 ```go
 DeleteTopic(topic) // Deletes the topic for the subscriber who calls it
 ```
-> TODO
->```go
->Ack(subscriber, message) // Initmates the broker that the message has been received and processed
->```
+
+```go
+Ack(subscriber, message) // Initmates the broker that the message has been received and processed. If ACK isn't received in a timeout, broker will retry sending the message
+```
