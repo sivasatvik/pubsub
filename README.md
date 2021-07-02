@@ -1,6 +1,6 @@
 # Pub/Sub system using Go
 
-A simple Publisher Subscriber system implementaion in _Golang_
+A simple Publisher Subscriber system implementation in _Golang_
 
 ## Broker APIs
 
